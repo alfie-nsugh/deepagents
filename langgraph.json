@@ -1,0 +1,9 @@
+{
+    "dependencies": ["deepagents", "langchain-google-genai"],
+    "graphs": {
+        "deep-agent": "./agent_server.py:graph"
+    },
+    "env": ".env",
+    "host": "0.0.0.0",
+    "port": 8123
+}

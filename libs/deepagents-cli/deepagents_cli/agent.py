@@ -3,6 +3,7 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
 from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend
@@ -18,6 +19,7 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.pregel import Pregel
 from langgraph.runtime import Runtime
+from langgraph.types import Checkpointer
 
 from deepagents_cli.agent_memory import AgentMemoryMiddleware
 from deepagents_cli.config import COLORS, config, console, get_default_coding_instructions, settings
@@ -335,6 +337,8 @@ def create_cli_agent(
     enable_memory: bool = True,
     enable_skills: bool = True,
     enable_shell: bool = True,
+    checkpointer: Checkpointer | None = None,
+    use_persistence: bool = True,
 ) -> tuple[Pregel, CompositeBackend]:
     """Create a CLI-configured agent with flexible options.
 
@@ -356,6 +360,8 @@ def create_cli_agent(
         enable_memory: Enable AgentMemoryMiddleware for persistent memory
         enable_skills: Enable SkillsMiddleware for custom agent skills
         enable_shell: Enable ShellMiddleware for local shell execution (only in local mode)
+        checkpointer: Optional checkpointer for persisting agent state between runs.
+                      Defaults to InMemorySaver() if not provided.
 
     Returns:
         2-tuple of (agent_graph, composite_backend)
@@ -459,6 +465,11 @@ def create_cli_agent(
         # Full HITL for destructive operations
         interrupt_on = _add_interrupt_on()
 
+    # Determine checkpointer
+    final_checkpointer = checkpointer
+    if final_checkpointer is None and use_persistence:
+        final_checkpointer = InMemorySaver()
+
     # Create the agent
     agent = create_deep_agent(
         model=model,
@@ -467,6 +478,6 @@ def create_cli_agent(
         backend=composite_backend,
         middleware=agent_middleware,
         interrupt_on=interrupt_on,
-        checkpointer=InMemorySaver(),
+        checkpointer=final_checkpointer,
     ).with_config(config)
     return agent, composite_backend
