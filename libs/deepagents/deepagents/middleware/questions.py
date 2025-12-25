@@ -111,11 +111,13 @@ def create_ask_human_tool() -> BaseTool:
     ) -> str:
         """Ask the human a question and wait for their response.
         
-        Use this tool when you:
+        Use this tool primarily when you:
+        - Are stuck and need guidance
         - Are uncertain about the right approach
+
+        Less importantly, use it when you:
         - Need clarification on requirements
         - Want to confirm before making significant changes
-        - Are stuck and need guidance
         
         The human will see your question with context and can provide
         a text answer or choose from options (if provided).
