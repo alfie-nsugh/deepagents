@@ -27,6 +27,9 @@ from deepagents_cli.integrations.sandbox_factory import get_default_working_dir
 from deepagents_cli.shell import ShellMiddleware
 from deepagents_cli.skills import SkillsMiddleware
 
+# Cache working directory at module load time to avoid blocking async calls
+_CACHED_CWD = str(Path.cwd())
+
 
 def list_agents() -> None:
     """List all available agents."""
@@ -123,7 +126,7 @@ All code execution and file operations happen in this sandbox environment.
 
 """
     else:
-        cwd = Path.cwd()
+        cwd = _CACHED_CWD
         working_dir_section = f"""<env>
 Working directory: {cwd}
 </env>
@@ -268,7 +271,8 @@ def _format_shell_description(tool_call: ToolCall, _state: AgentState, _runtime:
     """Format shell tool call for approval prompt."""
     args = tool_call["args"]
     command = args.get("command", "N/A")
-    return f"Shell Command: {command}\nWorking Directory: {Path.cwd()}"
+    # Use cached cwd to avoid blocking call in async context
+    return f"Shell Command: {command}\nWorking Directory: {_CACHED_CWD}"
 
 
 def _format_execute_description(tool_call: ToolCall, _state: AgentState, _runtime: Runtime) -> str:
@@ -423,7 +427,7 @@ def create_cli_agent(
 
             agent_middleware.append(
                 ShellMiddleware(
-                    workspace_root=str(Path.cwd()),
+                    workspace_root=_CACHED_CWD,
                     env=shell_env,
                 )
             )
